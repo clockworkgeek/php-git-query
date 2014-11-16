@@ -1,7 +1,7 @@
 <?php
 namespace GitQuery;
 
-class StoredObjectTest extends \PHPUnit_Framework_TestCase
+class ObjectTest extends \PHPUnit_Framework_TestCase
 {
 
     var $repo;
