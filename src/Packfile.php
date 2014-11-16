@@ -74,28 +74,6 @@ class Packfile
     {
         list($type, $size) = self::readSize($stream);
 
-        $repository = $this->repository;
-        /* @var $object Object */
-        switch ($type) {
-            case 1: // commit
-                $object = new Commit($repository, $sha1);
-                $verb = 'commit';
-                break;
-            case 2: // tree
-                $object = new Tree($repository, $sha1);
-                $verb = 'tree';
-                break;
-            case 3: // blob
-                $object = new Blob($repository, $sha1);
-                $verb = 'blob';
-                break;
-            case 4: // tag
-            case 6: // ofs-delta
-            case 7: // ref-delta
-            default: // undefined
-                throw new \RuntimeException('Packed object is unknown type '.dechex($type));
-        }
-
         // clear file read buffer by seeking to a known position
         fseek($stream, ftell($stream));
 
@@ -104,6 +82,28 @@ class Packfile
         $inflate = stream_filter_append($stream, 'zlib.inflate', null, $params);
         $content = fread($stream, $size);
         stream_filter_remove($inflate);
+
+        $repository = $this->repository;
+        /* @var $object Object */
+        switch ($type) {
+            case 1: // commit
+                $verb = 'commit';
+                $object = new Commit($repository, sha1("$verb $size\0".$content));
+                break;
+            case 2: // tree
+                $verb = 'tree';
+                $object = new Tree($repository, sha1("$verb $size\0".$content));
+                break;
+            case 3: // blob
+                $verb = 'blob';
+                $object = new Blob($repository, sha1("$verb $size\0".$content));
+                break;
+            case 4: // tag
+            case 6: // ofs-delta
+            case 7: // ref-delta
+            default: // undefined
+                throw new \RuntimeException('Packed object is unknown type '.dechex($type));
+        }
 
         $object->parse($verb, $content);
         return $object;
