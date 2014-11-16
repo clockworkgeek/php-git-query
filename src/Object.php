@@ -73,7 +73,7 @@ abstract class Object
         }
         else {
             // FIXME could cause an infinite loop if repository passes a bad stream
-            $this->repository->streamInto($this->sha1, array($this, 'read'));
+            $this->repository->streamInto($this->sha1, $this);
         }
         return true;
     }

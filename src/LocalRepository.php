@@ -94,12 +94,14 @@ class LocalRepository implements Repository
         return null;
     }
 
-    public function streamInto($sha1, $callback)
+    public function streamInto($sha1, Object $object)
     {
         $path = $this->getPath() . DS . 'objects' . DS . substr($sha1, 0, 2) . DS . substr($sha1, 2);
-        $stream = fopen($path, 'rb');
-        call_user_func($callback, $stream);
-        fclose($stream);
+        if (is_file($path)) {
+            $stream = fopen($path, 'rb');
+            $object->read($stream);
+            fclose($stream);
+        }
     }
 
     public function head()

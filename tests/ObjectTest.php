@@ -31,9 +31,9 @@ class ObjectTest extends \PHPUnit_Framework_TestCase
         $repo->expects($this->once())
             ->method('streamInto')
             ->with('not a real hash')
-            ->willReturnCallback(function($sha1, $callback) {
+            ->willReturnCallback(function($sha1, $object) {
                 $stream = fopen(__DIR__.'/sample.git/objects/d6/70460b4b4aece5915caf5c68d12f560a9fe3e4', 'rb');
-                call_user_func($callback, $stream);
+                $object->read($stream);
                 fclose($stream);
             });
         $object = $this->getMock('\GitQuery\Object', array('parse'), array($this->repo, 'not a real hash'));
