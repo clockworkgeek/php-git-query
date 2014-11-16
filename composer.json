@@ -1,0 +1,25 @@
+{
+  "name":"clockworkgeek/php-git-query",
+  "require": {
+    "php": "~5.3"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "~4.3",
+    "mikey179/vfsStream": "1.*"
+  },
+  "autoload": {
+    "psr-4": {
+      "GitQuery\\": "src/"
+    },
+    "files": [
+      "src/constants.php",
+      "src/functions.php"
+    ]
+  },
+  "authors":[
+    {
+      "name":"Daniel Deady",
+      "email":"daniel@clockworkgeek.com"
+    }
+  ]
+}
