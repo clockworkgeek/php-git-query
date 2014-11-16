@@ -8,7 +8,7 @@ namespace GitQuery;
  * Stream remains open indefinitely, to read it all and close would use
  * too much memory.
  * 
- * @see https://www.kernel.org/pub/software/scm/git/docs/technical/pack-format.txt
+ * @see https://www.kernel.org/pub/software/scm/git/docs/technical/pack-format.html
  */
 class Packfile
 {
