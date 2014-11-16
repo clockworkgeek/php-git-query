@@ -9,4 +9,7 @@
       <directory>tests</directory>
     </testsuite>
   </testsuites>
+  <php>
+    <ini name="error_reporting" value="32767"/>
+  </php>
 </phpunit>
