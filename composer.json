@@ -12,8 +12,7 @@
       "GitQuery\\": "src/"
     },
     "files": [
-      "src/constants.php",
-      "src/functions.php"
+      "src/bootstrap.php"
     ]
   },
   "authors":[
