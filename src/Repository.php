@@ -18,9 +18,10 @@ abstract class Repository
      *
      * If none is found return a null.
      *
-     * @param string $sha1            
+     * @param string $verb
+     * @param string $sha1
      */
-    public abstract function getContentURL($sha1);
+    public abstract function getContentURL($verb, $sha1);
 
     private static $repositories = array();
 

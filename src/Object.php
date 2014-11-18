@@ -21,6 +21,8 @@ abstract class Object
      */
     public abstract function parse($content);
 
+    protected abstract function getVerb();
+
     /**
      *
      * @var string
@@ -61,15 +63,16 @@ abstract class Object
             return false;
         }
         
-        $url = Repository::walk('getContentURL', array(
+        $this->url = $url = Repository::walk('getContentURL', array(
+            $this->getVerb(),
             $this->sha1
         ));
         if ($url) {
-            $content = file_get_contents($url);
+            $this->content = $content = file_get_contents($url);
             if ($content !== false) {
                 $this->parse($content);
-                return $this->hasBeenRead = true;
             }
+            return $this->hasBeenRead = true;
         }
         
         return false;

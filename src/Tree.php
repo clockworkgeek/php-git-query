@@ -6,6 +6,11 @@ class Tree extends Object implements \ArrayAccess, \Countable, \IteratorAggregat
 
     private $items = array();
 
+    protected function getVerb()
+    {
+        return 'tree';
+    }
+
     public function parse($content)
     {
         preg_match_all('/\G(?<mode>\d{6}) (?<name>[^\0]+)\0(?<sha1>.{20})/s', $content, $parsed, PREG_SET_ORDER);

@@ -12,6 +12,11 @@ namespace GitQuery;
 class Commit extends Object
 {
 
+    protected function getVerb()
+    {
+        return 'commit';
+    }
+
     public function parse($content)
     {
         // reset properties

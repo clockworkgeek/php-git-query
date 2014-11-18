@@ -46,10 +46,23 @@ class LocalRepositoryTest extends \PHPUnit_Framework_TestCase
     {
         $repo = new LocalRepository(__DIR__ . '/sample.git');
         
+        $this->assertEquals('git-object://commit/' . __DIR__ . '/sample.git/objects/43/6e298f70ec95470282ef104738edd503bfb65a', $repo->getContentURL('commit', '436e298f70ec95470282ef104738edd503bfb65a'));
+    }
+
+    public function testObjectsIntegration()
+    {
+        $repo = new LocalRepository(__DIR__ . '/sample.git');
+        
         $commit = $repo->head();
         $this->assertInstanceOf('\GitQuery\Commit', $commit);
         $this->assertEquals('436e298f70ec95470282ef104738edd503bfb65a', $commit->sha1);
         
-        $this->assertEquals('git-object://commit/' . __DIR__ . '/sample.git/objects/43/6e298f70ec95470282ef104738edd503bfb65a', $repo->getContentURL('436e298f70ec95470282ef104738edd503bfb65a'));
+        $tree = $commit->tree;
+        $this->assertInstanceOf('\GitQuery\Tree', $tree);
+        $this->assertEquals('80865964295ae2f11d27383e5f9c0b58a8ef21da', $tree->sha1);
+        
+        $blob = $tree[0];
+        $this->assertInstanceOf('\GitQuery\Blob', $blob);
+        $this->assertEquals('d670460b4b4aece5915caf5c68d12f560a9fe3e4', $blob->sha1);
     }
 }

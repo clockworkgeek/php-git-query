@@ -20,7 +20,7 @@ class CommitTest extends \PHPUnit_Framework_TestCase
         $repo = $this->getMock('\GitQuery\Repository');
         $repo->expects($this->once())
             ->method('getContentURL')
-            ->with(__METHOD__)
+            ->with('commit', __METHOD__)
             ->willReturn("data://text/plain,tree anotherHash\n\ntest message");
 
         $commit = new Commit(__METHOD__);

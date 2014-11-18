@@ -16,14 +16,18 @@ class ObjectTest extends \PHPUnit_Framework_TestCase
         // __METHOD__ is used as stand in for a hash value
         $this->repo->expects($this->once())
             ->method('getContentURL')
-            ->with(__METHOD__)
+            ->with('mock', __METHOD__)
             ->willReturn("data://text/plain,test content\n");
         
         $object = $this->getMock('\GitQuery\Object', array(
-            'parse'
+            'parse',
+            'getVerb'
         ), array(
             __METHOD__
         ));
+        $object->expects($this->any())
+            ->method('getVerb')
+            ->willReturn('mock');
         $object->expects($this->once())
             ->method('parse')
             ->with("test content\n");

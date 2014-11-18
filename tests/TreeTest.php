@@ -20,7 +20,7 @@ class TreeTest extends \PHPUnit_Framework_TestCase
         $repo = $this->getMock('\GitQuery\Repository');
         $repo->expects($this->once())
             ->method('getContentURL')
-            ->with(__METHOD__)
+            ->with('tree', __METHOD__)
             ->willReturn('data://text/plain;base64,MTAwNjQ0IHRlc3QudHh0AGFiY2RlZmdoaWprbG1ub3BxcnN0');
 
         $tree = new Tree(__METHOD__);

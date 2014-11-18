@@ -21,6 +21,7 @@ class LocalRepository extends Repository
      */
     public function __construct($path)
     {
+        parent::__construct();
         $this->path = rtrim($path, '/\\');
     }
 
@@ -101,11 +102,11 @@ class LocalRepository extends Repository
         return new Commit($sha1);
     }
 
-    public function getContentURL($sha1)
+    public function getContentURL($verb, $sha1)
     {
         $path = $this->getPath() . DS . 'objects' . DS . substr($sha1, 0, 2) . DS . substr($sha1, 2);
         if (is_file($path)) {
-            return ObjectStream::PROTOCOL . 'commit/' . $path;
+            return ObjectStream::PROTOCOL . $verb . '/' . $path;
         }
         return null;
     }
