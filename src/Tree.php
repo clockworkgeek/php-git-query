@@ -14,10 +14,10 @@ class Tree extends Object implements \ArrayAccess, \Countable, \IteratorAggregat
             switch ($item['mode']) {
                 case '100644':
                 case '100755':
-                    $object = new Blob($this->repository, $sha1);
+                    $object = new Blob($sha1);
                     break;
                 case '040000':
-                    $object = new Tree($this->repository, $sha1);
+                    $object = new Tree($sha1);
                     break;
                 default:
                     $object = new \stdClass();

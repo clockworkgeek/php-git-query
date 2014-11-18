@@ -28,10 +28,10 @@ class Commit extends Object
             list (, $name, $value) = $line;
             switch ($name) {
                 case 'parent':
-                    $this->parent = new Commit($this->repository, $value);
+                    $this->parent = new Commit($value);
                     break;
                 case 'tree':
-                    $this->tree = new Tree($this->repository, $value);
+                    $this->tree = new Tree($value);
                     break;
                 case 'author':
                 case 'committer':

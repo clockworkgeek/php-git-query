@@ -4,13 +4,6 @@ namespace GitQuery;
 class CommitTest extends \PHPUnit_Framework_TestCase
 {
 
-    var $repo;
-
-    function setUp()
-    {
-        $this->repo = $this->getMock('\GitQuery\Repository');
-    }
-
     function testRead()
     {
         // use class::method as a hash
@@ -20,5 +13,19 @@ class CommitTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals("test message", $commit->message);
         $this->assertFalse($commit->parent);
         $this->assertNotFalse($commit->tree);
+    }
+
+    function testAutoRead()
+    {
+        $repo = $this->getMock('\GitQuery\Repository');
+        $repo->expects($this->once())
+            ->method('getContentURL')
+            ->with(__METHOD__)
+            ->willReturn("data://text/plain,tree anotherHash\n\ntest message");
+
+        $commit = new Commit(__METHOD__);
+        $tree = $commit->tree;
+        $this->assertInstanceOf('\GitQuery\Tree', $tree);
+        $this->assertEquals('anotherHash', $tree->sha1);
     }
 }
