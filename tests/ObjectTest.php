@@ -13,7 +13,7 @@ class ObjectTest extends \PHPUnit_Framework_TestCase
 
     function testRead()
     {
-        // test data taken from http://git-scm.com/book/en/v2/Git-Internals-Git-Objects
+        // __METHOD__ is used as stand in for a hash value
         $this->repo->expects($this->once())
             ->method('getContentURL')
             ->with(__METHOD__)
