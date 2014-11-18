@@ -104,10 +104,24 @@ class LocalRepository extends Repository
 
     public function getContentURL($verb, $sha1)
     {
-        $path = $this->getPath() . DS . 'objects' . DS . substr($sha1, 0, 2) . DS . substr($sha1, 2);
+        // check individual file
+        $path = $this->getPath() . '/objects/' . substr($sha1, 0, 2) . DS . substr($sha1, 2);
         if (is_file($path)) {
             return ObjectStream::PROTOCOL . $verb . '/' . $path;
         }
+        
+        // check all packfile indexes
+        foreach (glob($this->getPath() . '/objects/pack/*.idx') as $path) {
+            $stream = fopen($path, 'rb');
+            $index = new PackfileIndex($stream);
+            fclose($stream);
+            $offset = @$index[$sha1];
+            if ($offset && is_int($offset)) {
+                $path = str_replace('.idx', '.pack', $path);
+                return PackfileStream::PROTOCOL . $path . '#' . $index[$sha1];
+            }
+        }
+        
         return null;
     }
 }

@@ -46,7 +46,10 @@ class LocalRepositoryTest extends \PHPUnit_Framework_TestCase
     {
         $repo = new LocalRepository(__DIR__ . '/sample.git');
         
+        // individual file
         $this->assertEquals('git-object://commit/' . __DIR__ . '/sample.git/objects/43/6e298f70ec95470282ef104738edd503bfb65a', $repo->getContentURL('commit', '436e298f70ec95470282ef104738edd503bfb65a'));
+        // stored in packfile
+        $this->assertEquals('git-packfile://' . __DIR__ . '/sample.git/objects/pack/pack-c5968142451b92172aa57b185874143d125fbdee.pack#12', $repo->getContentURL('blob', '5e4999f3bfe35be914c4bba7b0a362112cd4474c'));
     }
 
     public function testObjectsIntegration()
@@ -64,5 +67,8 @@ class LocalRepositoryTest extends \PHPUnit_Framework_TestCase
         $blob = $tree[0];
         $this->assertInstanceOf('\GitQuery\Blob', $blob);
         $this->assertEquals('d670460b4b4aece5915caf5c68d12f560a9fe3e4', $blob->sha1);
+
+        $blob = new Blob('5e4999f3bfe35be914c4bba7b0a362112cd4474c');
+        $this->assertEquals("packed content\n", $blob->content);
     }
 }
