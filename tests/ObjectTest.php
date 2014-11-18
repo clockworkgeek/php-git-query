@@ -1,17 +1,33 @@
 <?php
 namespace GitQuery;
 
-class ObjectStreamTest extends \PHPUnit_Framework_TestCase
+class ObjectTest extends \PHPUnit_Framework_TestCase
 {
 
-    function testRegistered()
+    var $repo;
+
+    function setUp()
     {
-        $this->assertTrue(in_array('git-object', stream_get_wrappers()));
+        $this->repo = $this->getMock('\GitQuery\Repository');
     }
 
     function testRead()
     {
-        $content = file_get_contents('git-object://blob/' . __DIR__ . '/sample.git/objects/d6/70460b4b4aece5915caf5c68d12f560a9fe3e4');
-        $this->assertEquals("test content\n", $content);
+        // test data taken from http://git-scm.com/book/en/v2/Git-Internals-Git-Objects
+        $this->repo->expects($this->once())
+            ->method('getContentURL')
+            ->with(__METHOD__)
+            ->willReturn("data://text/plain,test content\n");
+        
+        $object = $this->getMock('\GitQuery\Object', array(
+            'parse'
+        ), array(
+            __METHOD__
+        ));
+        $object->expects($this->once())
+            ->method('parse')
+            ->with("test content\n");
+        
+        $object->read();
     }
 }
