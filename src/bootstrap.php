@@ -29,3 +29,4 @@ function is_file_mode_write($mode)
 /* Initialise */
 
 stream_wrapper_register(ObjectStream::SCHEME, '\GitQuery\ObjectStream');
+stream_wrapper_register(PackfileStream::SCHEME, '\GitQuery\PackfileStream');
