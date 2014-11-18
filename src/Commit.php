@@ -4,6 +4,7 @@ namespace GitQuery;
 /**
  *
  * @property Commit $parent
+ * @property Commit[] $parents
  * @property string $tree
  * @property string $author
  * @property string $committer
@@ -24,6 +25,7 @@ class Commit extends Object
         $this->committer = false;
         $this->message = false;
         $this->parent = false;
+        $this->parents = array();
         $this->tree = false;
         
         list ($head, $this->message) = explode(LF . LF, $content, 2);
@@ -33,7 +35,7 @@ class Commit extends Object
             list (, $name, $value) = $line;
             switch ($name) {
                 case 'parent':
-                    $this->parent = new Commit($value);
+                    $this->parents[] = new Commit($value);
                     break;
                 case 'tree':
                     $this->tree = new Tree($value);
@@ -44,5 +46,7 @@ class Commit extends Object
                     break;
             }
         }
+        // if parents is empty parent will be false
+        $this->parent = reset($this->parents);
     }
 }
