@@ -3,7 +3,7 @@ namespace GitQuery;
 
 use RuntimeException;
 
-class LocalRepository implements Repository
+class LocalRepository extends Repository
 {
 
     /**
@@ -16,7 +16,8 @@ class LocalRepository implements Repository
     /**
      * The directory expected to contain a HEAD and refs
      *
-     * @param string $path Absolute location
+     * @param string $path
+     *            Absolute location
      */
     public function __construct($path)
     {
@@ -30,14 +31,14 @@ class LocalRepository implements Repository
 
     /**
      * Create necessary dirs and files to represent a repository
-     * 
+     *
      * Roughly equivalent to "git init --bare [directory]".
      * Safe to call multiple times.
      * Remote repos have no init() because they are read-only.
-     * 
+     *
      * It is an exception if $path is unwritable, sometimes this happens
      * because a parent dir is unwritable.
-     * 
+     *
      * @throws RuntimeException
      */
     public function init()
@@ -68,9 +69,9 @@ class LocalRepository implements Repository
                 throw new RuntimeException('Could not init tags directory');
             }
         }
-
+        
         if (! is_file($path . DS . HEAD)) {
-            if (! file_put_contents($path . DS . HEAD, 'ref: refs/heads/master'.LF)) {
+            if (! file_put_contents($path . DS . HEAD, 'ref: refs/heads/master' . LF)) {
                 throw new RuntimeException('Could not init HEAD reference');
             }
         }
@@ -79,34 +80,33 @@ class LocalRepository implements Repository
     protected function dereference($filename)
     {
         $content = file_get_contents($this->getPath() . DS . $filename);
-
+        
         // 20-byte hexidecimal hash
         if (preg_match('/^[0-9a-z]{40}$/i', $content)) {
             return $content;
         }
-
+        
         // symref format
         if (preg_match('/^ref: (.*)\Z/', $content, $refname)) {
             return $this->dereference($refname[1]);
         }
-
+        
         // dunno
         return null;
-    }
-
-    public function streamInto($sha1, Object $object)
-    {
-        $path = $this->getPath() . DS . 'objects' . DS . substr($sha1, 0, 2) . DS . substr($sha1, 2);
-        if (is_file($path)) {
-            $stream = fopen($path, 'rb');
-            $object->read($stream);
-            fclose($stream);
-        }
     }
 
     public function head()
     {
         $sha1 = $this->dereference(HEAD);
-        return new Commit($this, $sha1);
+        return new Commit($sha1);
+    }
+
+    public function getContentURL($sha1)
+    {
+        $path = $this->getPath() . DS . 'objects' . DS . substr($sha1, 0, 2) . DS . substr($sha1, 2);
+        if (is_file($path)) {
+            return ObjectStream::PROTOCOL . 'commit/' . $path;
+        }
+        return null;
     }
 }

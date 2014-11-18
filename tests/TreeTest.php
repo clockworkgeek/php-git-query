@@ -13,11 +13,9 @@ class TreeTest extends \PHPUnit_Framework_TestCase
 
     function testRead()
     {
-        $tree = new Tree($this->repo, '80865964295ae2f11d27383e5f9c0b58a8ef21da');
-
-        $stream = fopen(__DIR__.'/sample.git/objects/80/865964295ae2f11d27383e5f9c0b58a8ef21da', 'rb');
-        $tree->read($stream);
-        fclose($stream);
+        $tree = new Tree(__METHOD__);
+        $tree->parse("100644 test.txt\0abcdefghijklmnopqrst");
+        
         $this->assertCount(1, $tree);
         $this->assertInstanceOf('\GitQuery\Blob', $tree[0]);
         $this->assertEquals('test.txt', $tree[0]->name);

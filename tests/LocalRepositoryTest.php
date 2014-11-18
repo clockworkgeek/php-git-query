@@ -29,7 +29,7 @@ class LocalRepositoryTest extends \PHPUnit_Framework_TestCase
 
     /**
      * Fake a read only dir and fail at writing to it
-     * 
+     *
      * @expectedException RuntimeException
      */
     public function testNoWriteInit()
@@ -37,26 +37,19 @@ class LocalRepositoryTest extends \PHPUnit_Framework_TestCase
         // new directory has no write permission
         $dir = vfsStream::newDirectory('readonly', 0500);
         $this->assertFalse($dir->isWritable($dir->getUser(), $dir->getGroup()));
-
+        
         $repo = new LocalRepository($dir->url());
         $repo->init();
     }
 
-    public function testStreamInto()
+    public function testGetContentUrls()
     {
-        $copy = vfsStream::copyFromFileSystem(__DIR__.'/sample.git');
-        $repo = new LocalRepository($copy->url());
-
+        $repo = new LocalRepository(__DIR__ . '/sample.git');
+        
         $commit = $repo->head();
         $this->assertInstanceOf('\GitQuery\Commit', $commit);
-        $this->assertEquals("test commit\n", $commit->message);
-
-        $tree = $commit->tree;
-        $this->assertInstanceOf('\GitQuery\Tree', $tree);
-        $this->assertCount(1, $tree);
-
-        $blob = $tree[0];
-        $this->assertInstanceOf('\GitQuery\Blob', $blob);
-        $this->assertEquals("test content\n", $blob->content);
+        $this->assertEquals('436e298f70ec95470282ef104738edd503bfb65a', $commit->sha1);
+        
+        $this->assertEquals('git-object://commit/' . __DIR__ . '/sample.git/objects/43/6e298f70ec95470282ef104738edd503bfb65a', $repo->getContentURL('436e298f70ec95470282ef104738edd503bfb65a'));
     }
 }

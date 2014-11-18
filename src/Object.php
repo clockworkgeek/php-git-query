@@ -13,103 +13,65 @@ abstract class Object
 
     /**
      * Check $verb is valid and parse $content appropriately
-     * 
+     *
      * Implementers are expected to store whatever data they find.
-     * 
-     * @param string $verb Should be a single word like "blob", "commit" or "tree"
-     * @param string $content Caution, may contain binary data
+     *
+     * @param string $content
+     *            Caution, may contain binary data
      */
-    public abstract function parse($verb, $content);
+    public abstract function parse($content);
 
     /**
-     * @var Repository
+     *
+     * @var string
      */
-    protected $repository;
     protected $sha1;
 
     private $hasBeenRead = false;
 
-    public function __construct(Repository $repository, $sha1, $stream = null)
+    public function __construct($sha1)
     {
-        $this->repository = $repository;
         $this->sha1 = $sha1;
-        if (is_stream($stream)) {
-            $this->readContent($content);
-        }
     }
 
     public function __get($name)
     {
         // read-only properties
-        if (('sha1' === $name) || ('repository' === $name)) {
+        if (('sha1' === $name)) {
             return $this->$name;
         }
-
+        
         if ($this->read()) {
             // property might exist now
             return @$this->$name;
         }
-
+        
         // if has been read then no more properties to find
         return null;
     }
 
     /**
-     * Reads $stream once.
-     * 
-     * If $stream is null then contact repository to find a suitable source.
+     * Interrogate repository objects about an URL for SHA1
      *
-     * @param resource $stream
      * @return boolean TRUE if a read occurred, otherwise FALSE
      */
-    public function read($stream = null)
+    public function read()
     {
         if ($this->hasBeenRead) {
             return false;
         }
-
-        if (is_stream($stream)) {
-            $this->readContent($stream);
-        }
-        else {
-            // FIXME could cause an infinite loop if repository passes a bad stream
-            $this->repository->streamInto($this->sha1, $this);
-        }
-        return true;
-    }
-
-    protected function readContent($stream)
-    {
-        $params = array('window' => 15);
-        $inflate = stream_filter_append($stream, 'zlib.inflate', null, $params);
-
-        // read header 1 byte at a time
-        // cannot fseek() with a deflated stream so be careful not to overshoot content
-        // it would be nice to use fscanf here but in PHP it always reads to the next
-        //  newline which could be past the end of this object
-        $header = '';
-        do {
-            $byte = fgetc($stream);
-            if ($byte === false) {
-                // EOF
-                break;
+        
+        $url = Repository::walk('getContentURL', array(
+            $this->sha1
+        ));
+        if ($url) {
+            $content = file_get_contents($url);
+            if ($content !== false) {
+                $this->parse($content);
+                return $this->hasBeenRead = true;
             }
-            $header .= $byte;
-            // break on null char or sanity check header length
-        } while ((ord($byte) !== 0) && (strlen($header) < 20));
-
-        if (!preg_match('/^(\w+) (\d+)\\0/', $header, $fields)) {
-            // clean up stream which might be shared
-            stream_filter_remove($inflate);
-            throw new \RuntimeException("Compressed object {$this->sha1} was encoded badly");
         }
-        // first match from PCRE is a copy of $header, ignore it
-        list(, $verb, $length) = $fields;
-
-        $content = fread($stream, $length);
-        stream_filter_remove($inflate);
-
-        $this->parse($verb, $content);
-        $this->hasBeenRead = true;
+        
+        return false;
     }
 }

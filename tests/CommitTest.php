@@ -13,12 +13,11 @@ class CommitTest extends \PHPUnit_Framework_TestCase
 
     function testRead()
     {
-        $commit = new Commit($this->repo, '436e298f70ec95470282ef104738edd503bfb65a');
-
-        $stream = fopen(__DIR__.'/sample.git/objects/43/6e298f70ec95470282ef104738edd503bfb65a', 'rb');
-        $commit->read($stream);
-        fclose($stream);
-        $this->assertEquals("test commit\n", $commit->message);
+        // use class::method as a hash
+        $commit = new Commit(__METHOD__);
+        $commit->parse("tree anotherHash\n\ntest message");
+        
+        $this->assertEquals("test message", $commit->message);
         $this->assertFalse($commit->parent);
         $this->assertNotFalse($commit->tree);
     }

@@ -4,16 +4,10 @@ namespace GitQuery;
 class Tree extends Object implements \ArrayAccess, \Countable, \IteratorAggregate
 {
 
-    const TYPE = 'tree';
-
     private $items = array();
 
-    public function parse($verb, $content)
+    public function parse($content)
     {
-        if ($verb !== self::TYPE) {
-            throw new \RuntimeException($verb . ' is not ' . self::TYPE);
-        }
-
         preg_match_all('/\G(?<mode>\d{6}) (?<name>[^\0]+)\0(?<sha1>.{20})/s', $content, $parsed, PREG_SET_ORDER);
         foreach ($parsed as $item) {
             $sha1 = bin2hex($item['sha1']);
@@ -36,7 +30,7 @@ class Tree extends Object implements \ArrayAccess, \Countable, \IteratorAggregat
 
     /**
      * From interface Countable
-     * 
+     *
      * @return number
      */
     public function count()
@@ -47,7 +41,7 @@ class Tree extends Object implements \ArrayAccess, \Countable, \IteratorAggregat
 
     /**
      * From interface IteratorAggregate
-     * 
+     *
      * @return \ArrayIterator
      */
     public function getIterator()
@@ -58,6 +52,7 @@ class Tree extends Object implements \ArrayAccess, \Countable, \IteratorAggregat
 
     /**
      * (non-PHPdoc)
+     * 
      * @see ArrayAccess::offsetExists()
      */
     public function offsetExists($offset)
@@ -68,6 +63,7 @@ class Tree extends Object implements \ArrayAccess, \Countable, \IteratorAggregat
 
     /**
      * (non-PHPdoc)
+     * 
      * @see ArrayAccess::offsetGet()
      */
     public function offsetGet($offset)
@@ -78,6 +74,7 @@ class Tree extends Object implements \ArrayAccess, \Countable, \IteratorAggregat
 
     /**
      * (non-PHPdoc)
+     * 
      * @see ArrayAccess::offsetSet()
      */
     public function offsetSet($offset, $value)
@@ -88,6 +85,7 @@ class Tree extends Object implements \ArrayAccess, \Countable, \IteratorAggregat
 
     /**
      * (non-PHPdoc)
+     * 
      * @see ArrayAccess::offsetUnset()
      */
     public function offsetUnset($offset)

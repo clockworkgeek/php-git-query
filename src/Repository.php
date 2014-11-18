@@ -1,23 +1,50 @@
 <?php
 namespace GitQuery;
 
-interface Repository
+abstract class Repository
 {
 
     /**
-     * If a stream can be found for $sha1 pass it to $callback
-     *
-     * @param string $sha1
-     * @param Object $object
-     */
-    public function streamInto($sha1, Object $object);
-
-    /**
      * Dereference HEAD to find a Commit instance
-     * 
+     *
      * Commit file need not exist
      *
      * @return Commit
      */
-    public function head();
+    public abstract function head();
+
+    /**
+     * Search this repository for an object matching this hash
+     *
+     * If none is found return a null.
+     *
+     * @param string $sha1            
+     */
+    public abstract function getContentURL($sha1);
+
+    private static $repositories = array();
+
+    public static function walk($method, $params = array())
+    {
+        foreach (self::$repositories as $repository) {
+            $result = call_user_func_array(array(
+                $repository,
+                $method
+            ), $params);
+            if ($result) {
+                return $result;
+            }
+        }
+        return null;
+    }
+
+    public function __construct()
+    {
+        self::$repositories[spl_object_hash($this)] = $this;
+    }
+
+    public function __destruct()
+    {
+        unset(self::$repositories[spl_object_hash($this)]);
+    }
 }
