@@ -25,13 +25,13 @@ abstract class Repository
 
     private static $repositories = array();
 
-    public static function walk($method, $params = array())
+    public static function walk($method)
     {
         foreach (self::$repositories as $repository) {
             $result = call_user_func_array(array(
                 $repository,
                 $method
-            ), $params);
+            ), array_slice(func_get_args(), 1));
             if ($result) {
                 return $result;
             }

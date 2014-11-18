@@ -63,10 +63,7 @@ abstract class Object
             return false;
         }
         
-        $this->url = $url = Repository::walk('getContentURL', array(
-            $this->getVerb(),
-            $this->sha1
-        ));
+        $this->url = $url = Repository::walk('getContentURL', $this->getVerb(), $this->sha1);
         if ($url) {
             $this->content = $content = file_get_contents($url);
             if ($content !== false) {
