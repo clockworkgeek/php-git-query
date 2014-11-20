@@ -57,7 +57,7 @@ abstract class Connector
     {
         $length = hexdec($this->read(4));
         if (is_int($length) && $length) {
-            return $this->read($length);
+            return $this->read($length - 4);
         }
         if ($length === 0) {
             return ''; // end of packet not EOF
