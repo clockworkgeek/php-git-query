@@ -4,8 +4,6 @@ namespace GitQuery;
 use org\bovigo\vfs\vfsStreamWrapper;
 use org\bovigo\vfs\vfsStreamDirectory;
 use org\bovigo\vfs\vfsStream;
-use GitQuery\LocalRepository;
-use GitQuery\LF;
 
 class LocalRepositoryTest extends \PHPUnit_Framework_TestCase
 {
