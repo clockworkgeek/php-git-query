@@ -112,9 +112,7 @@ class LocalRepository extends Repository
         
         // check all packfile indexes
         foreach (glob($this->getPath() . '/objects/pack/*.idx') as $path) {
-            $stream = fopen($path, 'rb');
-            $index = new PackfileIndex($stream);
-            fclose($stream);
+            $index = new PackfileIndex($path);
             $offset = @$index[$sha1];
             if ($offset && is_int($offset)) {
                 $path = str_replace('.idx', '.pack', $path);

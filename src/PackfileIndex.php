@@ -4,9 +4,9 @@ namespace GitQuery;
 class PackfileIndex extends \ArrayObject
 {
 
-    public function __construct($stream = null)
+    public function __construct($url = null)
     {
-        if (is_stream($stream)) {
+        if ($url && ($stream = fopen($url, 'rb'))) {
             $this->read($stream);
         }
     }
