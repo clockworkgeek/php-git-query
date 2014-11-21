@@ -52,7 +52,7 @@ class LocalConnector extends Connector
         $descriptorspec = array(
             0 => array('pipe', 'r'),
             1 => array('pipe', 'w'),
-            2 => array('file', 'php://stderr', 'a')
+            2 => array('file', '/dev/null', 'a')
         );
         $this->resource = proc_open($this->process.' '.$this->path, $descriptorspec, $this->pipes);
         if (! is_resource($this->resource)) {
