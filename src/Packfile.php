@@ -25,20 +25,18 @@ class Packfile
      */
     private $stream;
 
-    public function __construct($stream)
+    public function __construct($url, $indexUrl = null)
     {
-        $this->stream = $stream;
+        $this->stream = fopen($url, 'rb');
         $this->confirmHeader();
+        if (isset($indexUrl)) {
+            $this->index = new PackfileIndex($indexUrl);
+        }
     }
 
-    /**
-     * This stream will be read then closed
-     *
-     * @param resource $stream            
-     */
-    public function readIndex($stream)
+    public function __destruct()
     {
-        $this->index = new PackfileIndex($stream);
+        fclose($this->stream);
     }
 
     private function confirmHeader()
