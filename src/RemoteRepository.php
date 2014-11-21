@@ -37,7 +37,7 @@ class RemoteRepository extends Repository
         $conn->process = $process;
         $refs = array();
         while (($line = $conn->readLine())) {
-            list($sha1, $ref) = sscanf($line, '%s %s');
+            sscanf($line, '%s %s', $sha1, $ref);
             $refs[$ref] = $sha1;
         }
         return $refs;
@@ -89,5 +89,17 @@ class RemoteRepository extends Repository
         }
         $conn->writeLine("done\n");
         $conn->flush();
+
+        $line = $conn->readLine();
+        if (! sscanf($line, 'ACK %[0-9a-f]', $sha1) && ($line != "NAK\n")) {
+            throw new \RuntimeException('Unrecognised server response: '.$line);
+        }
+
+        // whether server ACK'd $sha1 or NAK'd all $have it will now send a packfile
+        $packfilename = tempnam(sys_get_temp_dir(), 'packfile');
+        while (($data = $conn->read(8192))) {
+            file_put_contents($packfilename, $data, FILE_APPEND);
+        }
+        return $packfilename;
     }
 }

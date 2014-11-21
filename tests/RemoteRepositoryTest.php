@@ -41,10 +41,29 @@ class RemoteRepositoryTest extends \PHPUnit_Framework_TestCase
                 array("0009done\n"));
         
         $repo = new RemoteRepository($connector);
-        $repo->fetch();
+        $filename = $repo->fetch();
+        unlink($filename);
 
         $want = array('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx');
         $have = array('yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy');
-        $repo->fetch($want, $have);
+        $filename = $repo->fetch($want, $have);
+        unlink($filename);
+    }
+
+    /**
+     * @requires OS Linux
+     */
+    function testConnectToLocalGit()
+    {
+        $connector = new LocalConnector('file:'.__DIR__.'/sample.git');
+        $repo = new RemoteRepository($connector);
+        
+        $commit = $repo->head();
+        $this->assertInstanceOf('\GitQuery\Commit', $commit);
+        $this->assertEquals('436e298f70ec95470282ef104738edd503bfb65a', $commit->sha1);
+
+        $filename = $repo->fetch();
+        $this->assertNotNull($filename);
+        unlink($filename);
     }
 }

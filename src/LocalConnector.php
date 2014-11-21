@@ -39,23 +39,29 @@ class LocalConnector extends Connector
         $this->path = $parts['path'];
     }
 
+    public function __destruct()
+    {
+        $this->close();
+    }
+
     private function open()
     {
         if (is_null($this->process)) {
             throw new \RuntimeException('Process name has not been set, must be one of "git-upload-pack" or "git-receive-pack"');
         }
         $descriptorspec = array(
-            0 => array("pipe", "r"),
-            1 => array("pipe", "w"),
-            2 => array("file", "php://stderr", "a")
+            0 => array('pipe', 'r'),
+            1 => array('pipe', 'w'),
+            2 => array('file', 'php://stderr', 'a')
         );
         $this->resource = proc_open($this->process.' '.$this->path, $descriptorspec, $this->pipes);
         if (! is_resource($this->resource)) {
             throw new \RuntimeException('Unable to execute process, check STDERR');
         }
+        $this->isActive(true);
     }
 
-    public function __destruct()
+    private function close()
     {
         foreach ($this->pipes as $pipe) {
             fclose($pipe);
@@ -63,6 +69,16 @@ class LocalConnector extends Connector
         if (isset($this->resource)) {
             proc_close($this->resource);
         }
+        $this->isActive(false);
+    }
+
+    private function checkStatus()
+    {
+        if (! is_resource($this->resource)) {
+            $this->close();
+            return false;
+        }
+        return true;
     }
 
     public function read($length)
@@ -70,7 +86,7 @@ class LocalConnector extends Connector
         if (! $this->pipes) {
             $this->open();
         }
-        return fread($this->pipes[1], $length);
+        return $this->checkStatus() ? fread($this->pipes[1], $length) : false;
     }
 
     public function write($data)
@@ -78,7 +94,7 @@ class LocalConnector extends Connector
         if (! $this->pipes) {
             $this->open();
         }
-        return fwrite($this->pipes[0], $data);
+        return $this->checkStatus() ? fwrite($this->pipes[0], $data) : false;
     }
 
     public function flush()
@@ -86,6 +102,6 @@ class LocalConnector extends Connector
         if (! $this->pipes) {
             $this->open();
         }
-        fflush($this->pipes[0]);
+        $this->checkStatus() && fflush($this->pipes[0]);
     }
 }

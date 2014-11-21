@@ -84,4 +84,20 @@ abstract class Connector
         }
         return $this->write(sprintf('%04x%s', $length, $line));
     }
+
+    private $active = false;
+
+    /**
+     * Descendents should keep this active flag updated
+     * 
+     * @param boolean $active
+     * @return boolean
+     */
+    public function isActive($active = null)
+    {
+        if (isset($active)) {
+            $this->active = (bool) $active;
+        }
+        return $this->active;
+    }
 }
