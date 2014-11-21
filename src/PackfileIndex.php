@@ -42,7 +42,7 @@ class PackfileIndex extends \ArrayObject
             
             // long format
             if (0x8000 & $offset) {
-                $offset = bindec(fread($stream, 8));
+                list(, $offset) = unpack('J', fread($stream, 8));
             }
             
             $this[$hash] = $offset;
