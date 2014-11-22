@@ -97,7 +97,7 @@ class RemoteRepository extends Repository
 
         // whether server ACK'd $sha1 or NAK'd all $have it will now send a packfile
         $packfilename = tempnam(sys_get_temp_dir(), 'packfile');
-        while (($data = $conn->read(8192))) {
+        while (($data = $conn->read(0x10000))) {
             file_put_contents($packfilename, $data, FILE_APPEND);
         }
         return $packfilename;
