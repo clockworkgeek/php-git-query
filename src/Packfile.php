@@ -171,6 +171,6 @@ class Packfile
     public function writeIndex($stream)
     {
         $index = $this->buildIndex();
-        $index->write($stream, '');
+        $index->write($stream);
     }
 }
