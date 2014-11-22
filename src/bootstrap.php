@@ -26,6 +26,12 @@ function is_file_mode_write($mode)
     return (bool) strpbrk($mode, 'acxw+');
 }
 
+if (! function_exists('hex2bin')) {
+    function hex2bin($data) {
+        return pack('H*', $data);
+    }
+}
+
 /* Initialise */
 
 stream_wrapper_register(ObjectStream::SCHEME, '\GitQuery\ObjectStream');
