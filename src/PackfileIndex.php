@@ -30,11 +30,11 @@ class PackfileIndex extends \ArrayObject
     public $crc = array();
 
     /**
-     * 20-byte binary hashes
+     * 20-byte binary hash
      * 
      * @var string
      */
-    private $sha1Packfile, $sha1Index;
+    public $packfileSha1;
 
     public function __construct($url = null)
     {
@@ -92,7 +92,7 @@ class PackfileIndex extends \ArrayObject
      * @param resource $stream
      * @param string $packfileSha1 Hash of packfile being indexed
      */
-    public function write($stream, $packfileSha1)
+    public function write($stream)
     {
         $hash = hash_init('sha1');
         fwrite($stream, self::HEADER);
@@ -134,7 +134,7 @@ class PackfileIndex extends \ArrayObject
             hash_update($hash, $raw);
         }
 
-        $raw = hex2bin($packfileSha1);
+        $raw = hex2bin($this->packfileSha1);
         fwrite($stream, $raw);
         hash_update($hash, $raw);
         fwrite($stream, hash_final($hash, true));

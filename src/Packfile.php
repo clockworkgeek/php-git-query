@@ -20,11 +20,6 @@ class Packfile
     private $index;
 
     /**
-     * @var int
-     */
-    private $size;
-
-    /**
      *
      * @var resource
      */
@@ -32,7 +27,6 @@ class Packfile
 
     public function __construct($url, $indexUrl = null)
     {
-        $this->size = filesize($url);
         $this->stream = fopen($url, 'rb');
         $this->confirmHeader();
         if (isset($indexUrl)) {
@@ -165,12 +159,18 @@ class Packfile
         $hash = hash_init('sha1');
         // $offset is pos after last object
         hash_update_stream($hash, $stream, $offset);
-        // binary value instead of hexidecimal
-        $sha1 = hash_final($hash, true);
-        if ($sha1 !== fread($stream, 20)) {
+        $sha1 = hash_final($hash);
+        if ($sha1 !== bin2hex(fread($stream, 20))) {
             throw new \UnexpectedValueException('Packfile footer does not match rest of file, it might be corrupt');
         }
+        $index->packfileSha1 = $sha1;
 
         return $index;
+    }
+
+    public function writeIndex($stream)
+    {
+        $index = $this->buildIndex();
+        $index->write($stream, '');
     }
 }

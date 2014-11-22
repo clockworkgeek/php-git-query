@@ -4,6 +4,13 @@ namespace GitQuery;
 class PackfileTest extends \PHPUnit_Framework_TestCase
 {
 
+    static $filename;
+
+    static function setUpBeforeClass()
+    {
+        self::$filename = __DIR__ . '/sample.git/objects/pack/pack-c5968142451b92172aa57b185874143d125fbdee.pack';
+    }
+
     /**
      * @dataProvider readSizeProvider
      */
@@ -63,14 +70,20 @@ class PackfileTest extends \PHPUnit_Framework_TestCase
 
     function testBuildIndex()
     {
-        $packfile = new Packfile(__DIR__ . '/sample.git/objects/pack/pack-c5968142451b92172aa57b185874143d125fbdee.pack');
+        $packfile = new Packfile(self::$filename);
         $index = $packfile->buildIndex();
         $this->assertCount(1, $index);
         $this->assertCount(1, $index->crc);
         $this->assertEquals(12, $index['5e4999f3bfe35be914c4bba7b0a362112cd4474c']);
+        $this->assertEquals('c5968142451b92172aa57b185874143d125fbdee', $index->packfileSha1);
+    }
+
+    function testWriteIndex()
+    {
+        $packfile = new Packfile(self::$filename);
 
         $stream = fopen('php://temp', 'w+');
-        $index->write($stream, 'c5968142451b92172aa57b185874143d125fbdee');
+        $packfile->writeIndex($stream);
         rewind($stream);
         $indexFilename = __DIR__ . '/sample.git/objects/pack/pack-c5968142451b92172aa57b185874143d125fbdee.idx';
         $this->assertEquals(file_get_contents($indexFilename), stream_get_contents($stream));
