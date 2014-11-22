@@ -47,7 +47,7 @@ class LocalConnector extends Connector
     private function open()
     {
         if (is_null($this->process)) {
-            throw new \RuntimeException('Process name has not been set, must be one of "git-upload-pack" or "git-receive-pack"');
+            throw new \InvalidArgumentException('Process name has not been set, must be one of "git-upload-pack" or "git-receive-pack"');
         }
         $descriptorspec = array(
             0 => array('pipe', 'r'),

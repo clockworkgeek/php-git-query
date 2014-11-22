@@ -43,7 +43,7 @@ class Packfile
     {
         $header = fread($this->stream, 8);
         if ("PACK\x00\x00\x00\x02" !== $header) {
-            throw new \RuntimeException('Packfile header not recognised');
+            throw new \UnexpectedValueException('Packfile header not recognised');
         }
     }
 
@@ -97,7 +97,7 @@ class Packfile
             case 6: // ofs-delta
             case 7: // ref-delta
             default: // undefined
-                throw new \RuntimeException('Packed object is unknown type ' . dechex($type));
+                throw new \UnexpectedValueException('Packed object is unknown type ' . dechex($type));
         }
         
         $object->parse($content);
@@ -123,7 +123,7 @@ class Packfile
         while ($byte & 0x80) {
             if ($size > (PHP_INT_MAX >> 7)) {
                 // if $size is shifted any more it will overflow
-                throw new \RuntimeException('Unpacked size is too large');
+                throw new \OverflowException('Unpacked size is too large');
             }
             
             $char = fgetc($stream);

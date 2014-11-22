@@ -62,7 +62,7 @@ abstract class Connector
         if ($length === 0) {
             return ''; // end of packet not EOF
         }
-        throw new \RuntimeException('Packet is malformed. Could not read length.');
+        throw new \UnexpectedValueException('Packet is malformed. Could not read length.');
     }
 
     /**

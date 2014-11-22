@@ -51,7 +51,7 @@ class PackfileTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException RuntimeException
+     * @expectedException OverflowException
      */
     function testOversizedObject()
     {

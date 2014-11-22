@@ -20,7 +20,7 @@ class PackfileIndex extends \ArrayObject
     {
         $header = fread($stream, 8);
         if ("\xFFtOc\x00\x00\x00\x02" !== $header) {
-            throw new \RuntimeException('Packfile index header was not recognised');
+            throw new \UnexpectedValueException('Packfile index header was not recognised');
         }
         
         // N = 4 bytes

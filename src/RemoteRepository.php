@@ -92,7 +92,7 @@ class RemoteRepository extends Repository
 
         $line = $conn->readLine();
         if (! sscanf($line, 'ACK %[0-9a-f]', $sha1) && ($line != "NAK\n")) {
-            throw new \RuntimeException('Unrecognised server response: '.$line);
+            throw new \UnexpectedValueException('Unrecognised server response: '.$line);
         }
 
         // whether server ACK'd $sha1 or NAK'd all $have it will now send a packfile
