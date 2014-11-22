@@ -70,6 +70,7 @@ class RemoteRepository extends Repository
      * 
      * @param array $want SHA1 values to request or empty to retrieve all available
      * @param array $have SHA1 values stored locally or empty to clone all history
+     * @return string Temporary filename of resulting packfile
      */
     public function fetch($want = array(), $have = array())
     {

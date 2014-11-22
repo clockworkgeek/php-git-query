@@ -13,6 +13,12 @@ class LocalRepositoryTest extends \PHPUnit_Framework_TestCase
         vfsStream::setup('localrepo');
     }
 
+    public function testEmptyDirectory()
+    {
+        $repo = new LocalRepository(vfsStream::url('localrepo'));
+        $this->assertEmpty($repo->head());
+    }
+
     public function testInit()
     {
         $repo = new LocalRepository(vfsStream::url('localrepo/.git'));
@@ -68,5 +74,17 @@ class LocalRepositoryTest extends \PHPUnit_Framework_TestCase
 
         $blob = new Blob('5e4999f3bfe35be914c4bba7b0a362112cd4474c');
         $this->assertEquals("packed content\n", $blob->content);
+    }
+
+    public function testFetchFromRemoteRepository()
+    {
+        $local = new LocalRepository(vfsStream::url('localrepo/fetch.git'));
+        $local->init();
+        $remote = new RemoteRepository(new LocalConnector('file:'.__DIR__.'/sample.git'));
+        $local->fetch($remote);
+        $this->assertTrue(vfsStreamWrapper::getRoot()->hasChild('fetch.git/objects/pack/pack-533cb428d39e698641ec41438f683ce279a45812.pack'));
+        $this->assertTrue(vfsStreamWrapper::getRoot()->hasChild('fetch.git/objects/pack/pack-533cb428d39e698641ec41438f683ce279a45812.idx'));
+        
+        $this->assertEquals('git-packfile://'.vfsStream::url('localrepo/fetch.git/objects/pack/pack-533cb428d39e698641ec41438f683ce279a45812.pack#12'), $local->getContentURL('commit', '436e298f70ec95470282ef104738edd503bfb65a'));
     }
 }

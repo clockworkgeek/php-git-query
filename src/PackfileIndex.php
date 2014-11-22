@@ -139,4 +139,16 @@ class PackfileIndex extends \ArrayObject
         hash_update($hash, $raw);
         fwrite($stream, hash_final($hash, true));
     }
+
+    /**
+     * Like write() but with a location instead of a stream
+     * 
+     * @param string $url
+     */
+    public function save($url)
+    {
+        $stream = fopen($url, 'wb');
+        $this->write($stream);
+        fclose($stream);
+    }
 }

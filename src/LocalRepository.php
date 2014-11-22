@@ -14,6 +14,13 @@ class LocalRepository extends Repository
     private $path;
 
     /**
+     * Cache of PackfileIndex objects, keyed by path
+     * 
+     * @var array
+     */
+    private $indexes = array();
+
+    /**
      * The directory expected to contain a HEAD and refs
      *
      * @param string $path
@@ -80,7 +87,7 @@ class LocalRepository extends Repository
 
     protected function dereference($filename)
     {
-        $content = file_get_contents($this->getPath() . DS . $filename);
+        $content = @file_get_contents($this->getPath() . DS . $filename);
         
         // 20-byte hexidecimal hash
         if (preg_match('/^[0-9a-z]{40}$/i', $content)) {
@@ -96,10 +103,32 @@ class LocalRepository extends Repository
         return null;
     }
 
+    protected function getReferences()
+    {
+        $refs = array();
+
+        // look for index first
+        $refsFilename = $this->getPath() . '/info/refs';
+        if (file_exists($refsFilename)) {
+            $file = fopen($refsFilename, 'r');
+            while (fscanf($file, '%s %s', $sha1, $ref)) {
+                $refs[$ref] = $sha1;
+            }
+            return $refs;
+        }
+
+        // fallback to scanning the slow way
+        $refsDir = new \RecursiveDirectoryIterator($this->getPath().'/refs', \FilesystemIterator::SKIP_DOTS);
+        foreach (new \RecursiveIteratorIterator($refsDir) as $ref => $file) {
+            $refs[$ref] = file_get_contents($ref);
+        }
+        return $refs;
+    }
+
     public function head()
     {
         $sha1 = $this->dereference(HEAD);
-        return new Commit($sha1);
+        return $sha1 ? new Commit($sha1) : null;
     }
 
     public function getContentURL($verb, $sha1)
@@ -109,10 +138,20 @@ class LocalRepository extends Repository
         if (is_file($path)) {
             return ObjectStream::PROTOCOL . $verb . '/' . $path;
         }
+
+        // check recent packfile indexes
+        foreach ($this->indexes as $path => $index) {
+            $offset = @$index[$sha1];
+            if ($offset && is_int($offset)) {
+                $path = str_replace('.idx', '.pack', $path);
+                return PackfileStream::PROTOCOL . $path . '#' . $index[$sha1];
+            }
+        }
         
         // check all packfile indexes
         foreach (glob($this->getPath() . '/objects/pack/*.idx') as $path) {
             $index = new PackfileIndex($path);
+            $this->indexes[$path] = $index;
             $offset = @$index[$sha1];
             if ($offset && is_int($offset)) {
                 $path = str_replace('.idx', '.pack', $path);
@@ -121,5 +160,21 @@ class LocalRepository extends Repository
         }
         
         return null;
+    }
+
+    public function fetch($remote)
+    {
+        if (! $remote instanceof RemoteRepository) {
+            throw new \InvalidArgumentException('Remote parameter is not a repository');
+        }
+        $packfilename = $remote->fetch(array(), $this->getReferences());
+        mkdir($this->getPath().'/objects/pack', 0755, true);
+        $packfile = new Packfile($packfilename);
+        $index = $packfile->buildIndex();
+        $packname = $this->getPath().'/objects/pack/pack-' . $index->packfileSha1;
+        $destpackfilename = $packname . '.pack';
+        @rename($packfilename, $destpackfilename) or copy($packfilename, $destpackfilename) and unlink($packfilename);
+        $index->save($packname.'.idx');
+        $this->indexes[$packname.'.idx'] = $index;
     }
 }
