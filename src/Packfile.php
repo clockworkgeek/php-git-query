@@ -20,6 +20,11 @@ class Packfile
     private $index;
 
     /**
+     * @var int
+     */
+    private $size;
+
+    /**
      *
      * @var resource
      */
@@ -27,6 +32,7 @@ class Packfile
 
     public function __construct($url, $indexUrl = null)
     {
+        $this->size = filesize($url);
         $this->stream = fopen($url, 'rb');
         $this->confirmHeader();
         if (isset($indexUrl)) {
@@ -47,66 +53,22 @@ class Packfile
         }
     }
 
-    public function getObject($sha1)
-    {
-        $stream = $this->stream;
-        if (is_null($this->index)) {
-            $this->index = new PackfileIndex();
-            return $this->buildIndex($stream, $sha1);
-        }
-        
-        $offset = $this->index[$sha1];
-        if (! is_int($offset)) {
-            return null;
-        }
-        fseek($stream, $offset);
-        
-        return $this->readObject($stream);
-    }
-
-    private function readObject($stream)
-    {
-        list ($type, $size) = self::readSize($stream);
-        
-        // clear file read buffer by seeking to a known position
-        fseek($stream, ftell($stream));
-        
-        // decompress
-        $params = array(
-            'window' => 15
-        ); // necessary for inflate to match deflate
-        $inflate = stream_filter_append($stream, 'zlib.inflate', null, $params);
-        $content = fread($stream, $size);
-        stream_filter_remove($inflate);
-        
-        /* @var $object Object */
-        switch ($type) {
-            case 1: // commit
-                $verb = 'commit';
-                $object = new Commit(sha1("$verb $size\0" . $content));
-                break;
-            case 2: // tree
-                $verb = 'tree';
-                $object = new Tree(sha1("$verb $size\0" . $content));
-                break;
-            case 3: // blob
-                $verb = 'blob';
-                $object = new Blob(sha1("$verb $size\0" . $content));
-                break;
-            case 4: // tag
-            case 6: // ofs-delta
-            case 7: // ref-delta
-            default: // undefined
-                throw new \UnexpectedValueException('Packed object is unknown type ' . dechex($type));
-        }
-        
-        $object->parse($content);
-        return $object;
-    }
-
+    /**
+     * Read an object header from packfile's curious format
+     * 
+     * Starting from the current stream position several bytes are read.
+     * list($type, $size, $orig) = \GitQuery\Packfile::readSize($stream);
+     * $type = 1, 2, 3, 4, 6 or 7
+     * $size = number of bytes if the stream were uncompressed from this point on
+     * $orig = raw data actually read
+     * 
+     * @param resource $stream
+     * @throws \OverflowException
+     * @return array
+     */
     public static function readSize($stream)
     {
-        $char = fgetc($stream);
+        $orig = $char = fgetc($stream);
         if ($char === false) {
             return array(
                 0,
@@ -127,6 +89,7 @@ class Packfile
             }
             
             $char = fgetc($stream);
+            $orig .= $char;
             $byte = ord($char);
             $size |= ($byte & 0x7f) << $shift;
             $shift += 7;
@@ -134,41 +97,80 @@ class Packfile
         
         return array(
             $type,
-            $size
+            $size,
+            $orig
         );
     }
 
-    /**
-     * Scan entire file and hash each block and note it's offset
-     *
-     * @param resource $stream            
-     * @param string $sha1
-     *            Optional object to return if encountered
-     * @return Object
-     * @throws \RuntimeException
-     */
-    private function buildIndex($stream, $sha1 = null)
+    public static function getType($byte)
     {
-        $index = $this->index;
-        $object = null;
-        
-        // ensure position is correct
-        if ((ftell($stream) !== 8) && (fseek($stream, 8) === - 1)) {
-            // absolute seeking is sometimes possible, sometimes it is reverse/negative instead
-            throw new \RuntimeException('Packfile is not seekable for indexing');
+        switch ($byte) {
+            case 1:
+                return 'commit';
+            case 2:
+                return 'tree';
+            case 3:
+                return 'blob';
+            // 4 = tag
+            // 6 = ofs-delta
+            // 7 = ref-delta
         }
-        
-        // long number of objects
-        list (, $count) = unpack('N', fread($stream, 4));
-        
-        while (($count --) && (! feof($stream))) {
-            $offset = ftell($stream);
-            $object = $this->readObject($stream);
-            
-            // update index object
-            $index[$object->sha1] = $offset;
+        return null;
+    }
+
+    /**
+     * Read entire packfile, indexing object offsets and verifies total
+     * 
+     * @return \GitQuery\PackfileIndex
+     */
+    public function buildIndex()
+    {
+        $index = new PackfileIndex();
+        $stream = $this->stream;
+        rewind($stream);
+        $this->confirmHeader(); // advance 8 bytes
+
+        // unpack returns 1-based array?!
+        list(, $count) = unpack('N', fread($stream, 4)); // advance 4 bytes
+        // ftell() is wrong for compressed streams so track offset independently
+        $offset = 12;
+        // params equal to deflate settings
+        $params = array('window' => 15);
+
+        while ($count-- && ! feof($stream)) {
+            // expect file position to be correct here
+            list($type, $size, $orig) = self::readSize($stream);
+
+            // zlib bug, must fseek to clear read buffer
+            fseek($stream, $offset + strlen($orig));
+            $inflate = stream_filter_append($stream, 'zlib.inflate', null, $params);
+            // object data might be big, store in php://temp instead?
+            $object = fread($stream, $size);
+            stream_filter_remove($inflate);
+
+            // potentially slow hashing and compressing
+            $sha1 = sha1(sprintf("%s %d\0%s", self::getType($type), $size, $object));
+            $compressed = gzcompress($object);
+            $crc = crc32($orig . $compressed);
+            $index[$sha1] = $offset;
+            $index->crc[$sha1] = $crc;
+
+            // seek to correct position now that inflate is removed
+            $offset += strlen($orig) + strlen($compressed);
+            fseek($stream, $offset);
         }
-        
-        return $object;
+
+        // should be 20 bytes left for a final hash
+        rewind($stream);
+        $hash = hash_init('sha1');
+        // $offset is pos after last object
+        hash_update_stream($hash, $stream, $offset);
+        // binary value instead of hexidecimal
+        $sha1 = hash_final($hash, true);
+        if ($sha1 !== fread($stream, 20)) {
+            throw new \UnexpectedValueException('Packfile footer does not match rest of file, it might be corrupt');
+        }
+
+        return $index;
     }
 }

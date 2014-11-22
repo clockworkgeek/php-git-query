@@ -4,6 +4,8 @@ namespace GitQuery;
 class PackfileIndex extends \ArrayObject
 {
 
+    public $crc = array();
+
     public function __construct($url = null)
     {
         if ($url && ($stream = fopen($url, 'rb'))) {
@@ -31,10 +33,10 @@ class PackfileIndex extends \ArrayObject
         $hashes = str_split(fread($stream, $count * 20), 20);
         
         // skip CRC
-        fseek($stream, $count * 4, SEEK_CUR);
+        $this->crc = unpack('N*', fread($stream, $count * 4));
         
         // read short offsets, might be long ones later
-        $offsets = unpack("N$count", fread($stream, $count * 4));
+        $offsets = unpack('N*', fread($stream, $count * 4));
         
         foreach ($hashes as $hash) {
             $hash = bin2hex($hash);
