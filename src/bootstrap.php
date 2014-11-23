@@ -33,6 +33,6 @@ if (! function_exists('hex2bin')) {
 }
 
 /* Initialise */
-
+ini_set('allow_url_fopen', true);
 stream_wrapper_register(ObjectStream::SCHEME, '\GitQuery\ObjectStream');
 stream_wrapper_register(PackfileStream::SCHEME, '\GitQuery\PackfileStream');
