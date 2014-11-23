@@ -168,12 +168,10 @@ class LocalRepository extends Repository
             throw new \InvalidArgumentException('Remote parameter is not a repository');
         }
         $packfilename = $remote->fetch(array(), $this->getReferences());
-        mkdir($this->getPath().'/objects/pack', 0755, true);
         $packfile = new Packfile($packfilename);
         $index = $packfile->buildIndex();
         $packname = $this->getPath().'/objects/pack/pack-' . $index->packfileSha1;
-        $destpackfilename = $packname . '.pack';
-        @rename($packfilename, $destpackfilename) or copy($packfilename, $destpackfilename) and unlink($packfilename);
+        move($packfilename, $packname . '.pack');
         $index->save($packname.'.idx');
         $this->indexes[$packname.'.idx'] = $index;
     }

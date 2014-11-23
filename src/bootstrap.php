@@ -26,6 +26,19 @@ function is_file_mode_write($mode)
     return (bool) strpbrk($mode, 'acxw+');
 }
 
+/**
+ * Intelligent alternative to rename()
+ * 
+ * @param string $from
+ * @param string $to
+ * @return bool
+ */
+function move($from, $to)
+{
+    mkdir(dirname($to), 0755, true);
+    return @rename($from, $to) or copy($from, $to) and unlink($from);
+}
+
 if (! function_exists('hex2bin')) {
     function hex2bin($data) {
         return pack('H*', $data);
