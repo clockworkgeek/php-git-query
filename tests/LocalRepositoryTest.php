@@ -28,6 +28,7 @@ class LocalRepositoryTest extends \PHPUnit_Framework_TestCase
         $this->assertStringMatchesFormat('ref: refs/heads/%s', file_get_contents(vfsStream::url('localrepo/.git/HEAD')));
         $this->assertTrue(vfsStreamWrapper::getRoot()->hasChild('.git/objects'));
         $this->assertTrue(vfsStreamWrapper::getRoot()->hasChild('.git/refs/heads'));
+        $this->assertTrue(vfsStreamWrapper::getRoot()->hasChild('.git/refs/remotes'));
         $this->assertTrue(vfsStreamWrapper::getRoot()->hasChild('.git/refs/tags'));
     }
 
@@ -86,5 +87,7 @@ class LocalRepositoryTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue(vfsStreamWrapper::getRoot()->hasChild('fetch.git/objects/pack/pack-533cb428d39e698641ec41438f683ce279a45812.idx'));
         
         $this->assertEquals('git-packfile://'.vfsStream::url('localrepo/fetch.git/objects/pack/pack-533cb428d39e698641ec41438f683ce279a45812.pack#12'), $local->getContentURL('commit', '436e298f70ec95470282ef104738edd503bfb65a'));
+        $this->assertTrue(vfsStreamWrapper::getRoot()->hasChild('fetch.git/refs/remotes/master'));
+        $this->assertEquals('436e298f70ec95470282ef104738edd503bfb65a', file_get_contents(vfsStream::url('localrepo/fetch.git/refs/remotes/master')));
     }
 }

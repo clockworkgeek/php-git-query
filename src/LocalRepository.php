@@ -71,6 +71,12 @@ class LocalRepository extends Repository
                 throw new RuntimeException('Could not init heads directory');
             }
         }
+        $refsHeads = $path . DS . 'refs' . DS . 'remotes';
+        if (! is_dir($refsHeads)) {
+            if (! mkdir($refsHeads, 0755, true)) {
+                throw new RuntimeException('Could not init remotes directory');
+            }
+        }
         $refsTags = $path . DS . 'refs' . DS . 'tags';
         if (! is_dir($refsTags)) {
             if (! mkdir($refsTags, 0755, true)) {
@@ -120,7 +126,7 @@ class LocalRepository extends Repository
         // fallback to scanning the slow way
         $refsDir = new \RecursiveDirectoryIterator($this->getPath().'/refs', \FilesystemIterator::SKIP_DOTS);
         foreach (new \RecursiveIteratorIterator($refsDir) as $ref => $file) {
-            $refs[$ref] = file_get_contents($ref);
+            $refs[str_replace(__DIR__.'/', '', $ref)] = file_get_contents($ref);
         }
         return $refs;
     }
@@ -174,5 +180,14 @@ class LocalRepository extends Repository
         move($packfilename, $packname . '.pack');
         $index->save($packname.'.idx');
         $this->indexes[$packname.'.idx'] = $index;
+
+        // update 'remote' refs to match objects just received
+        $remoteRefs = $remote->getReferences();
+        foreach ($remoteRefs as $ref => $sha1) {
+            if (isset($index[$sha1])) {
+                $ref = str_replace('refs/heads/', 'refs/remotes/', $ref);
+                file_put_contents($this->getPath().DS.$ref, $sha1);
+            }
+        }
     }
 }
