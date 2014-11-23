@@ -37,6 +37,11 @@ class RemoteRepository extends Repository
         $conn->process = $process;
         $refs = array();
         while (($line = $conn->readLine())) {
+            if (! $line || ($line[0] === '#')) {
+                while ($conn->readLine()); // skip empty line or comment
+                continue;
+            }
+
             sscanf($line, '%s %s', $sha1, $ref);
             $refs[$ref] = $sha1;
         }
@@ -91,7 +96,10 @@ class RemoteRepository extends Repository
         $conn->writeLine("done\n");
         $conn->flush();
 
-        $line = $conn->readLine();
+        while (true) {
+            $line = $conn->readLine();
+            if (@$line[0] !== '#') break;
+        }
         if (! sscanf($line, 'ACK %[0-9a-f]', $sha1) && ($line != "NAK\n")) {
             throw new \UnexpectedValueException('Unrecognised server response: '.$line);
         }

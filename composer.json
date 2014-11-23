@@ -1,11 +1,14 @@
 {
   "name":"clockworkgeek/php-git-query",
   "require": {
-    "php": "~5.3"
+    "php": "~5.3",
+    "guzzlehttp/guzzle": "~5.0"
   },
   "require-dev": {
     "phpunit/phpunit": "~4.3",
-    "mikey179/vfsStream": "1.*"
+    "mikey179/vfsStream": "1.*",
+    "rackem/rackem": "@stable",
+    "rackem/cgi": "@stable"
   },
   "autoload": {
     "psr-4": {
