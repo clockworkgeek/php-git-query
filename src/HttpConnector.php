@@ -1,33 +1,27 @@
 <?php
 namespace GitQuery;
 
-use GuzzleHttp\Client;
-use GuzzleHttp\Stream\Stream;
+use Guzzle\Http\Client;
 
 class HttpConnector extends Connector
 {
 
     /**
-     * @var \GuzzleHttp\Client
+     * @var \Guzzle\Http\Client
      */
     private $client;
 
     /**
-     * @var \GuzzleHttp\Message\RequestInterface
+     * @var resource
      */
     private $request;
 
     /**
-     * @var \GuzzleHttp\Message\ResponseInterface
+     * @var \Guzzle\Http\Message\Response
      */
     private $response;
 
-    /**
-     * @var string
-     */
-    private $url;
-
-    const PATH_SUFFIX = '/info/refs';
+    const PATH_SUFFIX = 'info/refs';
 
     public function __construct($url)
     {
@@ -35,16 +29,19 @@ class HttpConnector extends Connector
         if ((($parts['scheme'] !== 'https') && ($parts['scheme'] !== 'http')) || ! isset($parts['host'])) {
             throw new \InvalidArgumentException($url.' cannot be understood as HTTP(S) URL');
         }
-        $this->url = $url;
-        $this->client = new Client();
+        $this->client = new Client($url);
     }
 
     public function read($length)
     {
         if (! $this->response) {
-            $request = $this->client->createRequest('GET', $this->url . self::PATH_SUFFIX);
-            $request->setQuery(array('service' => $this->process));
-            $this->response = $this->client->send($request);
+            $request = $this->client->get(self::PATH_SUFFIX.'?service='.$this->process);
+            $this->response = $request->send();
+            $this->response->getBody()->rewind();
+            $responseType = $this->response->getContentType();
+            if (strpos($responseType, 'application/x-'.$this->process) === false) {
+                throw new \UnexpectedValueException($responseType.' does not match expected response type. Dumb protocol is not supported.');
+            }
         }
 
         // clear used request so it cannot be confused when writing
@@ -56,16 +53,23 @@ class HttpConnector extends Connector
     public function write($data)
     {
         if (! $this->request) {
-            $this->request = $this->client->createRequest('POST', $this->url . DS . $this->process);
-            $this->request->setBody(Stream::factory(fopen('php://temp', 'w+')));
+            $this->request = fopen('php://temp', 'w+');
         }
 
-        return $this->request->getBody()->write($data);
+        return fwrite($this->request, $data);
     }
 
     public function flush()
     {
-        $request = $this->request;
-        $this->response = $request ? $this->client->send($request) : null;
+        if ($this->request) {
+            rewind($this->request);
+            $request = $this->client->post($this->process, array(
+                'Content-Type' => "application/x-{$this->process}-request"
+            ), $this->request);
+            $this->response = $request->send();
+        }
+        else {
+            $this->response = null;
+        }
     }
 }

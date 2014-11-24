@@ -10,7 +10,7 @@ class HttpConnectorTest extends \PHPUnit_Framework_TestCase
     static function setUpBeforeClass()
     {
         // runs git http-backend as CGI
-        exec('timeout 10 '.__DIR__.'/../vendor/bin/rackem '.__DIR__.'/rackem.config.php >/dev/null 2>&1 &');
+        exec('timeout 3 '.__DIR__.'/../vendor/bin/rackem '.__DIR__.'/rackem.config.php >/dev/null 2>&1 &');
         // give rackem time to start up
         sleep(1);
     }
@@ -27,5 +27,14 @@ class HttpConnectorTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('', $connector->readLine());
         // close gracefully
         $connector->writeLine();
+    }
+
+    function testRepositoryFetchRequiresUploading()
+    {
+        $connector = new HttpConnector('http://localhost:9393/sample.git');
+        $repo = new RemoteRepository($connector);
+        $filename = $repo->fetch();
+        $this->assertNotEmpty($filename);
+        unlink($filename);
     }
 }
